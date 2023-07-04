@@ -1,0 +1,13 @@
+[package]
+name = "qrcode-http"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.6.18"
+fast_qr = { version = "0.9.0", features = ["image", "svg"] }
+tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
+clap = { version = "4.3", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] } 
