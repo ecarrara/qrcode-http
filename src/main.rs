@@ -4,6 +4,8 @@ use fast_qr::{
 };
 use serde::Deserialize;
 use std::net::SocketAddr;
+use tower_http::trace::TraceLayer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use axum::{
     extract::Query,
@@ -22,6 +24,15 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_env("QRCODE_HTTP_LOG").unwrap_or_else(|_| {
+                "qrcode_http=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     let args = Args::parse();
 
     let addr: SocketAddr = match args.addr.parse() {
@@ -32,8 +43,11 @@ async fn main() {
         }
     };
 
-    let app = Router::new().route("/", get(generate_qrcode));
+    let app = Router::new()
+        .route("/", get(generate_qrcode))
+        .layer(TraceLayer::new_for_http());
 
+    tracing::info!("Listening on {addr}");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
